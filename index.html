@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Sort Visualizer - Demo</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #38bdf8;
+            --accent-yellow: #facc15; /* Đang xét */
+            --accent-red: #ef4444;    /* Pivot */
+            --accent-green: #22c55e;  /* Đã xong */
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Controls Section */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        input[type="text"] {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            outline: none;
+            width: 250px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background: var(--primary); color: #0f172a; }
+        .btn-secondary { background: #334155; color: white; }
+        .btn-accent { background: var(--accent-green); color: white; }
+        
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Visualization Area */
+        .visualizer-container {
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2rem;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bar {
+            width: 40px;
+            background: var(--primary);
+            border-radius: 6px 6px 2px 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        /* Status & Explanation */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-box {
+            background: rgba(15, 23, 42, 0.4);
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-box h3 { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .step-desc { font-size: 1rem; line-height: 1.5; }
+
+        .indices {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .index-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Color Guide */
+        .guide {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .guide-item { display: flex; align-items: center; gap: 0.5rem; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        /* Theory Section */
+        .theory {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .theory-item h4 { color: var(--primary); margin-bottom: 0.5rem; }
+        .theory-item p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.4; }
+
+        /* State Classes */
+        .bar.comparing { background-color: var(--accent-yellow) !important; transform: scaleX(1.1); }
+        .bar.pivot { background-color: var(--accent-red) !important; box-shadow: 0 0 15px var(--accent-red); }
+        .bar.sorted { background-color: var(--accent-green) !important; }
+        .bar.inactive { opacity: 0.3; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Quick Sort Visualizer</h1>
+
+        <div class="controls">
+            <input type="text" id="arrayInput" placeholder="Ví dụ: 45, 20, 10, 30, 50">
+            <button class="btn-secondary" onclick="generateRandom()">Random</button>
+            <button class="btn-primary" id="startBtn" onclick="initQuickSort()">Bắt đầu</button>
+            <button class="btn-secondary" id="prevBtn" onclick="prevStep()" disabled>⟵ Trước</button>
+            <button class="btn-secondary" id="nextBtn" onclick="nextStep()" disabled>Tiếp ⟶</button>
+            <button class="btn-secondary" onclick="reset()">Reset</button>
+        </div>
+
+        <div class="guide">
+            <div class="guide-item"><div class="dot" style="background: var(--primary)"></div> Mặc định</div>
+            <div class="guide-item"><div class="dot" style="background: var(--accent-yellow)"></div> Đang xét (i, j)</div>
+            <div class="guide-item"><div class="dot" style="background: var(--accent-red)"></div> Pivot</div>
+            <div class="guide-item"><div class="dot" style="background: var(--accent-green)"></div> Đã xong</div>
+        </div>
+
+        <div class="visualizer-container" id="visualizer">
+            <!-- Bars generated by JS -->
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h3>Bước hiện tại</h3>
+                <div id="stepCounter">Bước: 0 / 0</div>
+                <div id="stepDescription" class="step-desc">Nhấn "Bắt đầu" để khởi tạo các bước thực hiện.</div>
+            </div>
+            <div class="info-box">
+                <h3>Trạng thái chỉ số</h3>
+                <div class="indices">
+                    <div>Pivot: <span id="pivotVal" class="index-tag" style="background: var(--accent-red)">-</span></div>
+                    <div>i: <span id="indexI" class="index-tag" style="background: var(--accent-yellow); color: black;">-</span></div>
+                    <div>j: <span id="indexJ" class="index-tag" style="background: var(--accent-yellow); color: black;">-</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="theory">
+            <div class="theory-item">
+                <h4>Pivot là gì?</h4>
+                <p>Một phần tử được chọn làm "điểm mốc". Thuật toán sẽ chia mảng sao cho các số nhỏ hơn pivot nằm bên trái và lớn hơn nằm bên phải.</p>
+            </div>
+            <div class="theory-item">
+                <h4>Khi nào Swap?</h4>
+                <p>Trong quá trình duyệt, nếu tìm thấy phần tử nhỏ hơn pivot, nó sẽ được hoán đổi (swap) về phía đầu mảng (vị trí i).</p>
+            </div>
+            <div class="theory-item">
+                <h4>Chia mảng</h4>
+                <p>Sau khi pivot về đúng vị trí, mảng được chia làm 2 phần độc lập và lặp lại quá trình (đệ quy).</p>
+            </div>
+            <div class="theory-item">
+                <h4>Độ phức tạp</h4>
+                <p>Trung bình là <strong>O(n log n)</strong>. Đây là một trong những thuật toán sắp xếp nhanh nhất thực tế.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalArray = [];
+        let steps = [];
+        let currentStepIndex = -1;
+
+        // Initialize with random array
+        window.onload = () => generateRandom();
+
+        function generateRandom() {
+            const arr = Array.from({ length: 12 }, () => Math.floor(Math.random() * 90) + 10);
+            document.getElementById('arrayInput').value = arr.join(', ');
+            reset();
+        }
+
+        function reset() {
+            steps = [];
+            currentStepIndex = -1;
+            updateUI();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('stepDescription').innerText = "Nhấn 'Bắt đầu' để khởi tạo các bước thực hiện.";
+            
+            const input = document.getElementById('arrayInput').value;
+            originalArray = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            renderArray(originalArray);
+        }
+
+        function renderArray(arr, pivotIdx = -1, activeIndices = [], sortedIndices = [], range = []) {
+            const container = document.getElementById('visualizer');
+            container.innerHTML = '';
+            
+            const maxVal = Math.max(...arr, 1);
+            
+            arr.forEach((val, idx) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${(val / maxVal) * 100}%`;
+                
+                // Colors logic
+                if (idx === pivotIdx) bar.classList.add('pivot');
+                if (activeIndices.includes(idx)) bar.classList.add('comparing');
+                if (sortedIndices.includes(idx)) bar.classList.add('sorted');
+                
+                // Dim elements outside current range
+                if (range.length && (idx < range[0] || idx > range[1])) {
+                    bar.classList.add('inactive');
+                }
+
+                bar.innerHTML = `
+                    <span class="bar-value">${val}</span>
+                    <span class="bar-label">${idx}</span>
+                `;
+                container.appendChild(bar);
+            });
+        }
+
+        // Quick Sort Logic to capture steps
+        function initQuickSort() {
+            steps = [];
+            let arr = [...originalArray];
+            let sorted = new Array(arr.length).fill(false);
+            
+            // Record initial state
+            recordStep(arr, -1, [], [], "Bắt đầu thuật toán Quick Sort", [0, arr.length - 1]);
+            
+            quickSortRecursive(arr, 0, arr.length - 1, sorted);
+            
+            // Final state
+            recordStep(arr, -1, [], arr.map((_, i) => i), "Hoàn thành sắp xếp!", []);
+            
+            currentStepIndex = 0;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('prevBtn').disabled = false;
+            updateUI();
+        }
+
+        function quickSortRecursive(arr, low, high, sorted) {
+            if (low <= high) {
+                if (low === high) {
+                    sorted[low] = true;
+                    recordStep(arr, -1, [], getSortedIndices(sorted), `Phần tử tại index ${low} tự mặc định đã đúng vị trí.`, [low, high]);
+                    return;
+                }
+
+                let pivotIdx = partition(arr, low, high, sorted);
+                sorted[pivotIdx] = true;
+                
+                quickSortRecursive(arr, low, pivotIdx - 1, sorted);
+                quickSortRecursive(arr, pivotIdx + 1, high, sorted);
+            }
+        }
+
+        function partition(arr, low, high, sorted) {
+            let pivot = arr[high];
+            recordStep(arr, high, [], getSortedIndices(sorted), `Chọn Pivot là ${pivot} (phần tử cuối phân đoạn).`, [low, high]);
+            
+            let i = low - 1;
+            for (let j = low; j < high; j++) {
+                recordStep(arr, high, [i+1, j], getSortedIndices(sorted), `So sánh phần tử index ${j} (${arr[j]}) với Pivot (${pivot}).`, [low, high], i+1, j);
+                
+                if (arr[j] < pivot) {
+                    i++;
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                    recordStep(arr, high, [i, j], getSortedIndices(sorted), `Vì ${arr[j]} < ${pivot}, hoán đổi index ${i} và ${j}.`, [low, high], i, j);
+                }
+            }
+            
+            [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+            recordStep(arr, i + 1, [i + 1, high], getSortedIndices(sorted), `Đưa Pivot về đúng vị trí tại index ${i + 1}.`, [low, high], i + 1, high);
+            
+            return i + 1;
+        }
+
+        function recordStep(arr, pivotIdx, activeIndices, sortedIndices, desc, range, iVal = -1, jVal = -1) {
+            steps.push({
+                array: [...arr],
+                pivotIdx,
+                activeIndices: [...activeIndices],
+                sortedIndices: [...sortedIndices],
+                description: desc,
+                range: [...range],
+                i: iVal === -1 ? '-' : iVal,
+                j: jVal === -1 ? '-' : jVal
+            });
+        }
+
+        function getSortedIndices(sortedArr) {
+            return sortedArr.map((val, idx) => val ? idx : -1).filter(idx => idx !== -1);
+        }
+
+        // Navigation
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            if (steps.length === 0) return;
+            
+            const step = steps[currentStepIndex];
+            renderArray(step.array, step.pivotIdx, step.activeIndices, step.sortedIndices, step.range);
+            
+            document.getElementById('stepCounter').innerText = `Bước: ${currentStepIndex + 1} / ${steps.length}`;
+            document.getElementById('stepDescription').innerText = step.description;
+            document.getElementById('pivotVal').innerText = step.pivotIdx !== -1 ? step.array[step.pivotIdx] : '-';
+            document.getElementById('indexI').innerText = step.i;
+            document.getElementById('indexJ').innerText = step.j;
+
+            document.getElementById('prevBtn').disabled = (currentStepIndex === 0);
+            document.getElementById('nextBtn').disabled = (currentStepIndex === steps.length - 1);
+        }
+
+        // Keyboard listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowRight") nextStep();
+            if (e.key === "ArrowLeft") prevStep();
+        });
+    </script>
+</body>
+</html>
